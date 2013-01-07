@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require "rubygems"
+require "bundler/setup"
+require "cmux"
+
+require "pp"
+
+connection = CMUX::Connection.new
+connection.open "/dev/ttyUSB0"
+
+io = CMUX::IO.open_tty "/dev/ttyUSB0"
+chatter = CMUX::ModemChatter.new io
+
+all_done = false
+
+chatter.command("+CMUX=0") do |resp|
+  if resp.failure?
+    warn "command failed"
+  else
+    pp resp.response
+  end
+
+  all_done = true
+end
+
+until all_done
+  CMUX::ModemChatter.poll chatter
+end
+
+io.close
+connection.activate
+
+puts "MUX activated"
+
+3.times do
+  puts "Open port: #{connection.open_port}"
+end
+
+sleep

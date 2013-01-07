@@ -1,0 +1,26 @@
+BUILD  := <%= @build %>
+SRC    := <%= @src %>
+
+CC  := gcc
+CXX := g++
+CFLAGS   := --std=gnu99 -O2 -Wall -W -g -fPIC
+CXXFLAGS := -O2 -Wall -W -g -fPIC
+CPPFLAGS := -I${SRC}/../include
+
+SOURCES := c_api.cpp Package.cpp Connection.cpp
+
+OBJECTS := $(foreach name,$(basename ${SOURCES}),${BUILD}/$(name).o)
+DEPENDS := ${OBJECTS:.o=.d}
+
+all: ${BUILD}/libcmux.so
+
+clean:
+	rm -f ${BUILD}/libcmux.so ${OBJECTS} ${DEPENDS}
+
+${BUILD}/libcmux.so: ${OBJECTS}
+	${CXX} ${LDFLAGS} -shared -o $@ $^ ${LIBS}
+
+${BUILD}/%.o: ${SRC}/%.cpp
+	${CXX} ${CPPFLAGS} ${CXXFLAGS} -o $@ -c -MD -MF $(@:.o=.d) $<
+
+-include ${DEPENDS}
