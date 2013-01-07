@@ -1,50 +1,57 @@
 module CMUX
   class MUX
     def initialize(device)
-      @connection = CMUX::Connection.new
-      @connection.open device
-
-      io = CMUX::IO.open_tty device
       begin
-        # Magic!
+        @connection = CMUX::Connection.new
+        @connection.open device
 
-        # Modem will lose synchronization if previous session was interrupt
-        # in middle of frame.
-        2.times do
-          # Send 'AT' to ensure proper autobaud after DTR rise.
-          io.write "AT\r"
+        io = CMUX::IO.open_tty device
+        begin
+          # Magic!
 
-          # Terminate GSM 07.10 simple multiplexer.
-          # Will be ignored by modem in the AT mode.
-          io.write "\xf9\x03\xef\x05\xc3\x01\xf2\xf9"
-          io.flush
+          # Modem will lose synchronization if previous session was interrupted
+          # in the middle of frame, and it will resync only at start of second
+          # frame.
+          2.times do
+            # Send 'AT' to ensure proper autobaud after DTR rise in the AT mode.
+            io.write "AT\r"
 
-          # Read any crap from the buffer
-          until ::IO.select([ io ], [], [], 0.2).nil?
-            io.read_nonblock 2048
+            # Terminate GSM 07.10 simple multiplexer.
+            # Will be ignored by modem in the AT mode.
+            io.write "\xf9\x03\xef\x05\xc3\x01\xf2\xf9"
+            io.flush
+
+            # Read any crap from the buffer
+            until ::IO.select([ io ], [], [], 0.2).nil?
+              io.read_nonblock 2048
+            end
           end
-        end
 
-        chatter = CMUX::ModemChatter.new io
+          chatter = CMUX::ModemChatter.new io
 
-        all_done = false
+          all_done = false
 
-        chatter.command("+CMUX=0") do |resp|
-          if resp.failure?
-            raise "CMUX failed: #{resp.error}"
-          else
-            all_done = true
+          chatter.command("+CMUX=0", 5) do |resp|
+            if resp.failure?
+              raise "CMUX failed: #{resp.error}"
+            else
+              all_done = true
+            end
           end
+
+          until all_done
+            CMUX::ModemChatter.poll [ chatter ]
+          end
+        ensure
+          io.close
         end
 
-        until all_done
-          CMUX::ModemChatter.poll chatter
-        end
-      ensure
-        io.close
+        @connection.activate
+      rescue Exception => e
+        @connection.close
+
+        raise e
       end
-
-      @connection.activate
     end
 
     def close

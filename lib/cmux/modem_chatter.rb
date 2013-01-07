@@ -9,13 +9,16 @@ module CMUX
       @response = []
       @unprocessed_lines = []
       @have_running_command = true # because echo can be disabled before init string
+      @unsolicited = Hash.new do |hash, key|
+        hash[key] = Set.new
+      end
 
-      command "E1V1+CMEE=2"
+      command "E1V1+CMEE=2", 2
     end
 
-    def command(command, &block)
+    def command(command, timeout = nil, &block)
       submit_now = @command_queue.empty?
-      cmd = ModemCommand.new(command, self, &block)
+      cmd = ModemCommand.new(command, self, timeout, &block)
       @command_queue.push cmd
 
       submit if submit_now
@@ -32,12 +35,44 @@ module CMUX
       @io.write "AT#{cmd.command}\r\n"
     end
 
-    def self.poll(*devices)
-      read, write, except = ::IO.select devices.map(&:io)
+    def desired_timeout
+      return nil if @command_queue.empty?
 
-      read.each do |io|
-        devices.find { |dev| dev.io == io }.poll
+      command = @command_queue.first
+      return nil if command.timeout.nil?
+
+      now = DateTime.now.to_time
+
+      remaining = command.issued_at + command.timeout - now
+      if remaining < 0
+        remaining = 0
       end
+
+      remaining
+    end
+
+    def run_periodic
+      remaining = desired_timeout
+
+      if remaining == 0
+        @have_running_command = false
+        complete_first "timeout"
+      end
+    end
+
+    def self.poll(devices, timeout_limit = nil)
+      timeouts = devices.map(&:desired_timeout)
+      timeouts << timeout_limit
+      timeouts.reject! &:nil?
+      read, write, except = ::IO.select devices.map(&:io), [], [], timeouts.min
+
+      unless read.nil?
+        read.each do |io|
+          devices.find { |dev| dev.io == io }.poll
+        end
+      end
+
+      devices.each(&:run_periodic)
     end
 
     def poll
@@ -46,6 +81,14 @@ module CMUX
         on_read
       rescue Errno::EINTR, ::IO::WaitReadable
       end
+    end
+
+    def subscribe(type, receiver)
+      @unsolicited[type].add receiver
+    end
+
+    def unsubscribe(type, receiver)
+      @unsolicited[type].delete receiver
     end
 
     private
@@ -62,14 +105,14 @@ module CMUX
         line.rstrip!
 
         if @have_running_command
-          if line == "OK"
+          if line == "OK" || line == "CONNECT"
             @have_running_command = false
             completed = true
             complete_first
-          elsif line == "ERROR"
+          elsif line == "ERROR" || line == "NO CARRIER" || line == "NO DIALTONE" || line == "BUSY"
             @have_running_command = false
             completed = true
-            complete_first "error"
+            complete_first line
           elsif line =~ /^\+CME ERROR: (.*)$/
             @have_running_command = false
             completed = true
@@ -77,9 +120,9 @@ module CMUX
           else
             @response << line
           end
-        elsif @command_queue.any? && line = "AT#{@command_queue.first.command}"
+        elsif @command_queue.any? && line == "AT#{@command_queue.first.command}"
           @have_running_command = true
-        else
+        elsif !line.empty?
           on_unsolicited line
         end
       end
@@ -88,7 +131,54 @@ module CMUX
     end
 
     def on_unsolicited(line)
-      puts "unsolicited: #{line}"
+      if line =~ /^\+([A-Z]+): (.*)$/
+        type, body = $1, $2
+      else
+        return
+      end
+
+      list = []
+      chunk = ""
+      state = :void
+
+      body.chars do |char|
+        case state
+        when :void
+          case char
+          when ','
+            list << chunk
+            chunk = ""
+
+          when '"'
+            state = :string
+
+          else
+            chunk << char
+          end
+
+        when :string
+          case char
+          when '"'
+            state = :void
+
+          when '\\'
+            state = :escape
+
+          else
+            chunk << char
+          end
+
+        when :escape
+          chunk << char
+          state = :string
+        end
+      end
+
+      list << chunk
+
+      @unsolicited[type].each do |receiver|
+        receiver.unsolicited type, list
+      end
     end
 
     def complete_first(error = nil)

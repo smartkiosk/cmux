@@ -1,4 +1,5 @@
 require "ffi"
+require "set"
 
 require "cmux/version"
 require "cmux/modem_chatter"

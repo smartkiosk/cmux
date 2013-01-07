@@ -1,11 +1,12 @@
 module CMUX
   class ModemCommand
-    attr_reader :state
-    attr_reader :command
+    attr_reader :state, :command, :timeout, :issued_at
 
-    def initialize(command, chatter, &block)
+    def initialize(command, chatter, timeout, &block)
       @command = command
       @chatter = chatter
+      @timeout = timeout
+      @issued_at = DateTime.now.to_time
       @block = block
       @state = :queued
     end
