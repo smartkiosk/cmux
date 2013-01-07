@@ -124,7 +124,7 @@ int cmux_open_device(const char *filename, char **error) {
 
   attr.c_iflag = IGNBRK | IGNPAR;
   attr.c_oflag = 0;
-  attr.c_cflag = CS8 | HUPCL | CRTSCTS | CREAD;
+  attr.c_cflag = CS8 | HUPCL | CRTSCTS | CREAD | CLOCAL;
   attr.c_lflag = 0;
 
   cfsetispeed(&attr, B115200);
