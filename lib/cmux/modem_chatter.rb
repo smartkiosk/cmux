@@ -70,7 +70,7 @@ module CMUX
             @have_running_command = false
             completed = true
             complete_first "error"
-          elsif line =~ /^+CME ERROR: (.*)$/
+          elsif line =~ /^\+CME ERROR: (.*)$/
             @have_running_command = false
             completed = true
             complete_first $1

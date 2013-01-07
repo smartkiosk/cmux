@@ -4,7 +4,7 @@ module CMUX
       @connection = CMUX::Connection.new
       @connection.open device
 
-      io = CMUX::IO.open_tty "/dev/ttyUSB0"
+      io = CMUX::IO.open_tty device
       begin
         # Magic!
 
@@ -14,9 +14,9 @@ module CMUX
           # Send 'AT' to ensure proper autobaud after DTR rise.
           io.write "AT\r"
 
-          # Terminate GSM 07.10 advanced multiplexer.
+          # Terminate GSM 07.10 simple multiplexer.
           # Will be ignored by modem in the AT mode.
-          io.write "\x7e\x03\xef\xc3\x01\x70\x7e"
+          io.write "\xf9\x03\xef\x05\xc3\x01\xf2\xf9"
           io.flush
 
           # Read any crap from the buffer
@@ -29,7 +29,7 @@ module CMUX
 
         all_done = false
 
-        chatter.command("+CMUX=1,0,5,31") do |resp|
+        chatter.command("+CMUX=0") do |resp|
           if resp.failure?
             raise "CMUX failed: #{resp.error}"
           else

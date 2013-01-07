@@ -23,7 +23,6 @@ CMUXInstance::CMUXInstance(CMUXManager *parent, ControlRequestHandler *owner) :
 
   gsm0710_initialize(&m_ctx);
 
-  m_ctx.mode = GSM0710_MODE_ADVANCED;
   m_ctx.user_data = this;
   m_ctx.read = CMUXInstance::gsm0710_read;
   m_ctx.write = CMUXInstance::gsm0710_write;
