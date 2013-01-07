@@ -7,8 +7,9 @@ namespace CMUX {
 
 enum Request {
   RequestOpen = 0,
-  RequestActivate = 1,
-  RequestOpenPort = 2
+  RequestActivate,
+  RequestOpenPort,
+  RequestClosePort
 };
 
 class Package;
@@ -21,7 +22,8 @@ public:
   void open(const std::string &device);
   void activate();
 
-  std::string openPort();
+  std::string openPort(int port);
+  void closePort(int port);
 
 private:
   bool exchange(Package &in, Package &out);

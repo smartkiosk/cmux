@@ -17,7 +17,7 @@ public:
   void exit(int code);
 
 private:
-  std::tr1::unordered_set<DescriptorWatcher *> m_watchers, m_orphans;
+  std::tr1::unordered_set<DescriptorWatcher *> m_watchers, m_orphans, m_newcomers;
 };
 
 #endif

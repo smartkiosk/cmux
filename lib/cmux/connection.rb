@@ -47,9 +47,9 @@ module CMUX
       @handle = nil
     end
 
-    def open_port
+    def open_port(index)
       buffer = FFI::Buffer.new :pointer, 1
-      status = Library.cmux_open_port @handle, buffer
+      status = Library.cmux_open_port @handle, index, buffer
       if status == -1
         raise Library.cmux_error(@handle)
       end
@@ -59,6 +59,13 @@ module CMUX
         pointer.read_string
       ensure
         Library.cmux_free pointer
+      end
+    end
+
+    def close_port(index)
+      status = Library.cmux_close_port @handle, index
+      if status == -1
+        raise Library.cmux_error(@handle)
       end
     end
   end

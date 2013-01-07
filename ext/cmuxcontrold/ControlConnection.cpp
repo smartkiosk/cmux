@@ -1,9 +1,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <cmux/Package.h>
+#include <errno.h>
 
 #include "ControlConnection.h"
 #include "ControlServer.h"
@@ -17,7 +15,7 @@ ControlConnection::ControlConnection(ControlServer *server, int fd) : m_server(s
   socklen_t len = sizeof(m_cred);
 
   if(getsockopt(m_fd, SOL_SOCKET, SO_PEERCRED, &m_cred, &len) == -1) {
-    close(m_fd);
+    ::close(m_fd);
     delete this;
 
     return;
@@ -31,7 +29,7 @@ ControlConnection::ControlConnection(ControlServer *server, int fd) : m_server(s
 ControlConnection::~ControlConnection() {
   delete m_requestHandler;
 
-  close(m_fd);
+  ::close(m_fd);
 
   m_server->unregisterConnection(this);
 }
@@ -63,9 +61,8 @@ void ControlConnection::readable() {
     return;
 
   if(bytes == -1) {
-    perror("recv");
-
-    abort();
+    delete this;
+    return;
   }
 
   size_t usedBytes = size + bytes - RECEIVE_AREA;
@@ -104,12 +101,15 @@ void ControlConnection::writable() {
     return;
 
   if(bytes == -1) {
-    perror("send");
-
-    abort();
+    delete this;
+    return;
   }
 
   m_sendBuf.erase(m_sendBuf.begin(), m_sendBuf.begin() + bytes);
+}
+
+void ControlConnection::close() {
+  delete this;
 }
 
 void ControlConnection::sendMessage(Package &package) {
@@ -133,4 +133,8 @@ uid_t ControlConnection::uid() {
 
 gid_t ControlConnection::gid() {
   return m_cred.gid;
+}
+
+void ControlConnection::abnormal() {
+  delete this;
 }

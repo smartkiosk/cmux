@@ -14,7 +14,7 @@ EventLoop::~EventLoop() {
 }
 
 void EventLoop::addWatcher(DescriptorWatcher *watcher) {
-  m_watchers.insert(watcher);
+  m_newcomers.insert(watcher);
 }
 
 void EventLoop::removeWatcher(DescriptorWatcher *watcher) {
@@ -23,9 +23,20 @@ void EventLoop::removeWatcher(DescriptorWatcher *watcher) {
 
 int EventLoop::exec() {
   while(1) {
+    std::tr1::unordered_set<DescriptorWatcher *>::iterator it, orphan_it;
+
+    it = m_newcomers.begin();
+    while(it != m_newcomers.end()) {
+      DescriptorWatcher *watcher = *it;
+
+      m_watchers.insert(watcher);
+
+      it = m_newcomers.erase(it);
+    }
+
     struct pollfd fds[m_watchers.size()], *ptr = fds;
 
-    std::tr1::unordered_set<DescriptorWatcher *>::iterator it = m_watchers.begin(), orphan_it;
+    it = m_watchers.begin();
 
     while(it != m_watchers.end()) {
 
@@ -78,14 +89,18 @@ int EventLoop::exec() {
         watcher->readable();
       }
 
-      if(ptr->revents & POLLOUT) {
-        watcher->writable();
-      }
+      orphan_it = m_orphans.find(watcher);
+      if(orphan_it == m_orphans.end())
+        if(ptr->revents & POLLOUT) {
+          watcher->writable();
+        }
 
       if(ptr->revents & (POLLERR | POLLNVAL)) {
-        syslog(LOG_CRIT, "Abnormal revents %u of fd %d\n", ptr->revents, ptr->fd);
+        syslog(LOG_WARNING, "abnormal revents %u of fd %d\n", ptr->revents, ptr->fd);
+        orphan_it = m_orphans.find(watcher);
+        if(orphan_it == m_orphans.end())
 
-        return -1;
+            watcher->abnormal();
       }
 
       ptr++;

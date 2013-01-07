@@ -73,10 +73,10 @@ int cmux_activate(CMUX_CTX *cmux) {
   }
 }
 
-int cmux_open_port(CMUX_CTX *cmux, char **device) {
+int cmux_open_port(CMUX_CTX *cmux, int port, char **device) {
   try {
-    std::string port = cmux->connection->openPort();
-    *device = strdup(port.c_str());
+    std::string path = cmux->connection->openPort(port);
+    *device = strdup(path.c_str());
 
     return 0;
   } catch(const std::exception &e) {
@@ -87,6 +87,20 @@ int cmux_open_port(CMUX_CTX *cmux, char **device) {
   }
 }
 
+int cmux_close_port(CMUX_CTX *cmux, int port) {
+  try {
+    cmux->connection->closePort(port);
+
+    return 0;
+  } catch(const std::exception &e) {
+    free(cmux->error);
+    cmux->error = strdup(e.what());
+
+    return -1;
+  }
+}
+
+
 void cmux_free(void *data) {
   free(data);
 }
@@ -94,7 +108,7 @@ void cmux_free(void *data) {
 int cmux_open_device(const char *filename, char **error) {
   struct termios attr;
 
-  int fd = open(filename, O_RDWR | O_NOCTTY);
+  int fd = open(filename, O_RDWR | O_NOCTTY | O_NDELAY);
   if(fd == -1) {
     *error = strdup(strerror(errno));
 

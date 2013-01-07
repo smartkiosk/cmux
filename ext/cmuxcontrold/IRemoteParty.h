@@ -12,6 +12,7 @@ public:
     virtual ~IRemoteParty() {}
 
     virtual void sendMessage(CMUX::Package &package) = 0;
+    virtual void close() = 0;
 
     virtual pid_t pid() = 0;
     virtual uid_t uid() = 0;

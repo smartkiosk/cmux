@@ -11,6 +11,7 @@ public:
 
     virtual void readable() = 0;
     virtual void writable() = 0;
+    virtual void abnormal() = 0;
 };
 
 #endif

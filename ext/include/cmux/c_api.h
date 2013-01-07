@@ -14,7 +14,8 @@ const char *cmux_error(CMUX_CTX *cmux);
 
 int cmux_open(CMUX_CTX *cmux, const char *device);
 int cmux_activate(CMUX_CTX *cmux);
-int cmux_open_port(CMUX_CTX *cmux, char **device);
+int cmux_open_port(CMUX_CTX *cmux, int port, char **device);
+int cmux_close_port(CMUX_CTX *cmux, int port);
 void cmux_free(void *data);
 
 int cmux_open_device(const char *filename, char **error);

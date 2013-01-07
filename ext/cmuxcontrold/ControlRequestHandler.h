@@ -6,6 +6,7 @@ namespace CMUX {
 }
 
 class IRemoteParty;
+class CMUXInstance;
 
 class ControlRequestHandler {
 public:
@@ -13,11 +14,12 @@ public:
   ~ControlRequestHandler();
 
   void handleMessage(CMUX::Package &package);
+  void multiplexerTerminated();
 
 private:
-  int shutdown(int type);
 
   IRemoteParty *m_remote;
+  CMUXInstance *m_mux;
 };
 
 #endif

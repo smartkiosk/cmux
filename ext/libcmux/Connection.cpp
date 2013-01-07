@@ -128,10 +128,11 @@ void Connection::activate() {
   }
 }
 
-std::string Connection::openPort() {
+std::string Connection::openPort(int port) {
   Package in, out;
 
   in.writeByte(RequestOpenPort);
+  in.writeInt(port);
   if(!exchange(in, out))
     throw std::runtime_error("communication error");
 
@@ -144,5 +145,22 @@ std::string Connection::openPort() {
     return out.readString();
   }
 }
+
+void Connection::closePort(int port) {
+  Package in, out;
+
+  in.writeByte(RequestClosePort);
+  in.writeInt(port);
+  if(!exchange(in, out))
+    throw std::runtime_error("communication error");
+
+  int status = out.readByte();
+  if(status == 0) {
+    std::string error = out.readString();
+
+    throw std::runtime_error(error);
+  }
+}
+
 
 }

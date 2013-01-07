@@ -6,35 +6,37 @@ require "cmux"
 
 require "pp"
 
-connection = CMUX::Connection.new
-connection.open "/dev/ttyUSB0"
+mux = CMUX::MUX.new "/dev/ttyUSB0"
 
-io = CMUX::IO.open_tty "/dev/ttyUSB0"
-chatter = CMUX::ModemChatter.new io
+loop do
+  status = mux.allocate 1
 
-all_done = false
+  puts "Status channel: #{status.device}"
 
-chatter.command("+CMUX=0") do |resp|
-  if resp.failure?
-    warn "command failed"
-  else
-    pp resp.response
+  status.open do |io|
+    info_got = false
+
+    chatter = CMUX::ModemChatter.new io
+    chatter.command("+CGMM;+CGMI;+CGMR") do |resp|
+      if resp.failure?
+        warn "command failed"
+      else
+        pp resp.response
+      end
+
+      info_got = true
+    end
+
+    until info_got
+      CMUX::ModemChatter.poll chatter
+    end
   end
 
-  all_done = true
+  status.close
+
+
+  sleep 1
 end
 
-until all_done
-  CMUX::ModemChatter.poll chatter
-end
+mux.close
 
-io.close
-connection.activate
-
-puts "MUX activated"
-
-3.times do
-  puts "Open port: #{connection.open_port}"
-end
-
-sleep

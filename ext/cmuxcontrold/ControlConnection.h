@@ -20,8 +20,10 @@ public:
 
   virtual void readable();
   virtual void writable();
+  virtual void abnormal();
 
   virtual void sendMessage(CMUX::Package &package);
+  virtual void close();
 
   virtual pid_t pid();
   virtual uid_t uid();

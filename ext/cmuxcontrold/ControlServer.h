@@ -19,6 +19,7 @@ public:
 
   virtual void readable();
   virtual void writable();
+  virtual void abnormal();
 
 private:
   friend class ControlConnection;

@@ -7,10 +7,12 @@ CFLAGS   := --std=gnu99 -O2 -Wall -W -g
 CXXFLAGS := -O2 -Wall -W -g
 CPPFLAGS := -I${SRC}/../include
 
-LDFLAGS := -L${SRC}/../../lib
-LIBS    := -lcmux
+LDFLAGS := -L${SRC}/../../lib -Wl,-rpath,${SRC}/../../lib
+LIBS    := -lcmux -lutil
 
-SOURCES := main.cpp EventLoop.cpp ControlServer.cpp ControlConnection.cpp
+SOURCES := main.cpp EventLoop.cpp ControlServer.cpp ControlConnection.cpp \
+	ControlRequestHandler.cpp CMUXInstance.cpp CMUXManager.cpp gsm0710.c \
+	CMUXChannel.cpp
 
 OBJECTS := $(foreach name,$(basename ${SOURCES}),${BUILD}/$(name).o)
 DEPENDS := ${OBJECTS:.o=.d}
@@ -25,5 +27,9 @@ ${BUILD}/cmuxcontrold.so: ${OBJECTS}
 
 ${BUILD}/%.o: ${SRC}/%.cpp
 	${CXX} ${CPPFLAGS} ${CXXFLAGS} -o $@ -c -MD -MF $(@:.o=.d) $<
+
+${BUILD}/%.o: ${SRC}/%.c
+	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ -c -MD -MF $(@:.o=.d) $<
+
 
 -include ${DEPENDS}
