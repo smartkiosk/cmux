@@ -14,9 +14,6 @@ Gem::Specification.new do |gem|
   gem.name          = "cmux"
   gem.require_paths = ["lib"]
   gem.version       = CMUX::VERSION
-  gem.extensions    = [ "ext/libcmux/extconf.rb",
-                        "ext/cmuxcontrold/extconf.rb" ]
 
-  gem.add_development_dependency 'rake-compiler'
   gem.add_dependency 'ffi'
 end

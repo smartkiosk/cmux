@@ -3,7 +3,7 @@ module CMUX
   module Library
     extend FFI::Library
 
-    ffi_lib File.expand_path(File.dirname(__FILE__) + "/../libcmux.so")
+    ffi_lib "cmux"
 
     attach_function :cmux_create,      [ :buffer_out ], :pointer
     attach_function :cmux_destroy,     [ :pointer ], :void
