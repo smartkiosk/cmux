@@ -4,8 +4,8 @@ require File.expand_path('../lib/cmux/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Sergey Gridasov"]
   gem.email         = ["grindars@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{Ruby bindings for CMUX, GSM 07.10 multiplexer}
+  gem.summary       = %q{Ruby bindings for CMUX, GSM 07.10 multiplexer}
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($\)
