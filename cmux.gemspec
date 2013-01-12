@@ -5,8 +5,8 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Sergey Gridasov"]
   gem.email         = ["grindars@gmail.com"]
   gem.description   = %q{Ruby bindings for CMUX, GSM 07.10 multiplexer}
-  gem.summary       = %q{Ruby bindings for CMUX, GSM 07.10 multiplexer}
-  gem.homepage      = ""
+  gem.summary       = gem.description
+  gem.homepage      = "https://github.com/smartkiosk/ruby-cmux"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
