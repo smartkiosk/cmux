@@ -1,6 +1,6 @@
 # Cmux
 
-TODO: Write a gem description
+Ruby binding for the [smartkiosk modem multiplexer daemon](https://github.com/smartkiosk/cmux).
 
 ## Installation
 
