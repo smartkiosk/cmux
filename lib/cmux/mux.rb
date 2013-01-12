@@ -31,7 +31,7 @@ module CMUX
 
           all_done = false
 
-          chatter.command("+CMUX=0", 5) do |resp|
+          chatter.command("&D2+IPR=115200;+CMUX=0", 5) do |resp|
             if resp.failure?
               raise "CMUX failed: #{resp.error}"
             else
