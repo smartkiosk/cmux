@@ -13,7 +13,7 @@ module CMUX
         hash[key] = Set.new
       end
 
-      command "E1V1+CMEE=2", 2
+      command "E1V1+CMEE=1", 2
     end
 
     def command(command, timeout = nil, &block)
